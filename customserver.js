@@ -110,7 +110,7 @@ function processAPI(req, res) {
  * To enable directory listing, set permitDirectoryListing to 1. Note that
  * this may not be safe!
  */
-var permitDirectoryListing = 1;
+var permitDirectoryListing = 0;
 
 /* END USER CONFIGURATION
  *
