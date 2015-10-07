@@ -22,4 +22,4 @@ Since the goal is to get a developer who wants to work on the frontend immediate
 
 That said, it has been designed with the idea of shunting all requests for changeable content (API calls and POSTs) into a function that can be customized to respond however you like. If that option is enabled and a client requests either a URL that isn't present on the server (something like 127.0.0.1:1337/?getJSONData, for example) or requests to POST something somewhere, the handling for that is passed off to the function processAPI(req, res). Within that function, you can place all of your interactivity.
 
-Since this is brand-new, there are undoubtedly bugs, poorly conceived implementations, and improvements to be made.
+CustomServer is released under the Apache 2.0 license, a very permissive license that allows you to use and customize it for nearly anything you can imagine. Please abide by its (very, very few) restrictions.

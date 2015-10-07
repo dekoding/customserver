@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="author" content="Damon Kaswell" />
+
+        <title>CustomServer Example</title>
+
+        <link href="css/app.css" rel="stylesheet"></link>
+        <link href="http://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet" type="text/css" />
+    </head>
+    <body>
+        <h1>CustomServer</h1>
+        <h3>A simple and easily customized web server for Node.js<h3>
+
+        <h2>MANIFESTO</h2>
+        <p>The goal here is to include the minimum set of built-in modules to handle everything a regular web server needs to be able to handle. A web server should:</p>
+
+        <ul>
+            <li>Allow access to standard file types (HTML, images, etc.)</li>
+            <li>Elegantly handle bad URLs</li>
+            <li>Accept GET and POST requests (For interactive apps)</li>
+        </ul>
+
+        <p>The end result should be a server that is usable for static pages immediately, and is quick and easy to customize for interactive pages with a minimum of fuss.</p>
+
+        <div class="notice">This is NOT a server that needs an extensive set of add-on modules to be fully functional. It is ideal for the frontend developer who wants to just start writing HTML and JavaScript immediately and have it work.</div>
+
+        <p>To develop interactive apps that send, receive, and store data in a database or file on the node.js host, you will of course need whatever modules are required for that project.</p>
+
+        <h2>USAGE</h2>
+        <p>Literally, just "node customserver.js" and that's it. It assumes there is a subdirectory called /app and a file there called index.html. These are easily customized in the script itself, which is well-commented for adjustment as you see fit.</p>
+
+        <p>It will start the http process on http://127.0.0.1:1337 by default. Anything you put in /app, be it CSS, JavaScript, or HTML, will be served up appropriately. The server also supports file browsing, though this isn't on by default.</p>
+
+        <p>Since the goal is to get a developer who wants to work on the frontend immediately get started, NO other node.js modules are required. The point of customserver is to be able to run it and forget about it while you're working on the user-viewable part of your website.</p>
+
+        <p>That said, it has been designed with the idea of shunting all requests for changeable content (API calls and POSTs) into a function that can be customized to respond however you like. If that option is enabled and a client requests either a URL that isn't present on the server (something like <strong>127.0.0.1:1337/?getJSONData</strong>, for example) or requests to POST something somewhere, the handling for that is passed off to the function <em>processAPI(req, res)</em>. Within that function, you can place all of your interactivity.</p>
+
+        <div class="notice">CustomServer is released under the Apache 2.0 license, a very permissive license that allows you to use and customize it for nearly anything you can imagine. Please abide by its (very, very few) restrictions.</div>
+
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+        <script src="js/app.js"></script>
+    </body>
+</html>
