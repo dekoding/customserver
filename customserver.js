@@ -60,7 +60,7 @@ var error500B = '<!doctype html><html><head><title>500</title></head><body><h1>5
 	'<p>Internal server error! Check your link and try again.</body></html>';
 
 // Default app location and HTML file.
-var appDir = "./app/"
+var appDir = "./app/";
 var defaultHTML = "index.html";
 
 // Default file extensions
@@ -121,200 +121,186 @@ var permitDirectoryListing = 0;
 ///////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-// Utility functions
-function getTimeStamp() {
-	// Create a date object with the current time
-	var now = new Date();
+// 4. Build server
+var customServer = {
+	url : '',
 
-	// Create an array with the current month, day and time
-	var date = [ now.getMonth() + 1, now.getDate(), now.getFullYear() ];
+	timeStamp : function() {
+		var now = new Date();
 
-	// Create an array with the current hour, minute and second
-	var time = [ now.getHours(), now.getMinutes(), now.getSeconds() ];
+		// Create an array with the current month, day and time
+		var date = [ now.getMonth() + 1, now.getDate(), now.getFullYear() ];
 
-	// Determine AM or PM suffix based on the hour
-	var suffix = ( time[0] < 12 ) ? "AM" : "PM";
+		// Create an array with the current hour, minute and second
+		var time = [ now.getHours(), now.getMinutes(), now.getSeconds() ];
 
-	// Convert hour from military time
-	time[0] = ( time[0] < 12 ) ? time[0] : time[0] - 12;
+		// Determine AM or PM suffix based on the hour
+		var suffix = ( time[0] < 12 ) ? "AM" : "PM";
 
-	// If hour is 0, set it to 12
-	time[0] = time[0] || 12;
+		// Convert hour from military time
+		time[0] = ( time[0] < 12 ) ? time[0] : time[0] - 12;
 
-	// If seconds and minutes are less than 10, add a zero
-	for ( var i = 1; i < 3; i++ ) {
-		if ( time[i] < 10 ) {
-			time[i] = "0" + time[i];
+		// If hour is 0, set it to 12
+		time[0] = time[0] || 12;
+
+		// If seconds and minutes are less than 10, add a zero
+		for ( var i = 1; i < 3; i++ ) {
+			if ( time[i] < 10 ) {
+				time[i] = "0" + time[i];
+			}
 		}
-	}
 
-	// Return the formatted string
-	return date.join("/") + " " + time.join(":") + " " + suffix;
-}
+		// Return the formatted string
+		return date.join("/") + " " + time.join(":") + " " + suffix;
+	},
 
-function getFile(filename, res, mimeType) {
-	fs.readFile(filename, function(err, contents) {
-		if(!err) {
-			res.setHeader("Content-Length", contents.length);
-			res.setHeader("Content-Type", mimeType);
-			res.statusCode = 200;
-			res.end(contents);
-		} else {
-			res.writeHead(500);
-			res.end(error500B);
-		}
-	});
-}
+	getFile : function(filename, res, mimeType) {
+		fs.readFile(filename, function(err, contents) {
+			if(err) {
+				customServer.error("500B");
+			} else {
+				res.setHeader("Content-Length", contents.length);
+				res.setHeader("Content-Type", validExtensions[mimeType]);
+				res.statusCode = 200;
+				res.write(contents);
+				res.end();
+			}
+		});
+	},
 
-// 5. Build server
-var timeStamp = getTimeStamp();
-console.log(timeStamp + ": Web server starting on " + serverUrl + ":" + port);
+	getDir : function() {
+		fs.readdir(customServer.url, function (err, files) {
+			if (err) {
+				throw err;
+			} else {
+				res.setHeader("Content-Type", "text/html");
+				res.write('<!doctype html><html><head><title>Index of ' + req.url + '</title></head><body bgcolor="white"><h1>Index of ' + req.url + '</h1><hr><pre>Path/Filename<br/>-------------<br/><a href="../">../</a><br/>');
+				var filesSorted = [];
+				var dirsSorted = [];
 
-http.createServer( function(req, res) {
-	timeStamp = getTimeStamp();
-	console.log(timeStamp + ": New client request: " + req.url + " - Method: " + req.method);
-	if(req.method === "GET") {
-		//A path or file was requested
-		if(req.url=="/") {
-			// Top-level request. Display default URL.
-			var url = appDir + defaultHTML;
-		} else {
-			var url = appDir + req.url;
-		}
-		timeStamp = getTimeStamp();
-		if(path.extname(url)) {
-			// A specific file was requested. Get the extension.
-			console.log(timeStamp + ": Client requested a file. Testing extension validity...");
-			var ext = path.extname(url);
-			timeStamp = getTimeStamp();
-			var isValidExt = validExtensions[ext];
-			if (isValidExt) {
-				console.log(timeStamp + ": File extension " + ext + " is VALID. Testing availability...")
-				// The extension is valid. Serve the file up if it's available..
-				fs.stat(url, function(err, stat){
-					timeStamp = getTimeStamp();
-					if(err == null) {
-						console.log(timeStamp + ": File is AVAILABLE. Providing to client.");
-						getFile(url, res, ext); 
+				files.forEach(function(file) {
+					var fileObj = customServer.url + file;
+					stats = fs.lstatSync(fileObj);
+					if(stats.isDirectory()) {
+						dirsSorted.push({
+							"dirname" : file,
+							"creation" : stats['birthtime']
+						});
 					} else {
-						console.log(timeStamp + ": File is UNAVAILABLE. Returning 404.");
-						res.writeHead(404);
-						res.end(error404);
+						filesSorted.push({
+							"filename" : file,
+							"size" : stats['size'],
+							"creation" : stats['birthtime']
+						});
 					}
 				});
 
-			} else {
-				console.log(timeStamp + ": File extension '" + ext + "' is INVALID. Returning 500.");
-				res.writeHead(500);
-				res.end(error500A);
+				dirsSorted.sort().forEach(function(dir) {
+					var content = '<a href="' + dir.dirname + '/">' + dir.dirname + '/</a>';
+					var characters = dir.dirname.toString().length;
+					var spaces = 99-characters;
+					for(i=0; i<spaces; i++) {
+						content += " ";
+					}
+					content += dir.creation + '<br/>';
+					res.write(content);
+				});
+				filesSorted.sort().forEach(function(file) {
+					var content = '<a href="' + file.filename + '">' + file.filename + '</a>';
+					var characters = file.filename.toString().length;
+					var spaces = 100-characters;
+					for(i=0; i<spaces; i++) {
+						content += " ";
+					}
+					content += file.creation + '          -          ' + file.size + '<br/>';
+					res.write(content);
+				});
+				res.end('</pre><hr></body></html>');
 			}
+		});
+	},
 
-		} else {
-			console.log(timeStamp + ": Client requested a location or API.");
-			fs.stat(url, function(err, stat){
-				if(err == null) {
-					// This path exists. It is either a directory listing request or a file without an extension.
-					if(!stat.isDirectory) {
-						timeStamp = getTimeStamp();
+	error : function(type, res) {
+		switch(type) {
+			case "403": res.writeHead(403); res.end(error403); break;
+			case "404": res.writeHead(404); res.end(error404); break;
+			case "500A" : res.writeHead(500); res.end(error500A); break;
+			default : res.writeHead(500); res.end(error500B);
+		}
+	},
 
-						// The path is a file. Check if unknown file types are permitted.
-						if(permitUnknownFiles == 1) {
-							console.log(timeStamp + ": Location identified as unknown file type. Processing as " + 
-								unknownFileType + ".");
-							getFile(url, res, unknownFileType);
+	init : function(req, res) {
+		console.log(customServer.timeStamp() + ": Web server starting on " + serverUrl + ":" + port);
+		http.createServer( function(req, res) {
+			console.log(customServer.timeStamp() + ": New client request: " + req.url + " - Method: " + req.method);
+			if(req.url=="/") {
+				// Top-level request. Set URL to default.
+				customServer.url = appDir + defaultHTML;
+			} else {
+				// Requested a specific file, location, or API.
+				customServer.url = appDir + req.url;
+			}
+			if(path.extname(customServer.url)) {
+				// A specific file was requested. Get the extension.
+				console.log(customServer.timeStamp() + ": Client requested a file. Testing extension validity...");
+				var ext = path.extname(customServer.url);
+				var isValidExt = validExtensions[ext];
+				if (isValidExt) {
+					console.log(customServer.timeStamp() + ": File extension " + ext + " is VALID. Testing availability...");
+					// The extension is valid. Serve the file up if it's available..
+					fs.stat(customServer.url, function(err, stat){
+						if(err === null) {
+							console.log(customServer.timeStamp() + ": File is AVAILABLE. Providing to client.");
+							customServer.fileCount += 1;
+							customServer.getFile(customServer.url, res, ext); 
 						} else {
-							console.log(timeStamp + ": Location identified as unknown file type. Returning 500.")
-							res.writeHead(500);
-							res.end(error500A);
+							console.log(customServer.timeStamp() + ": File is UNAVAILABLE. Returning 404.");
+							customServer.error("404", res);
 						}
-
-					} else {
-						timeStamp = getTimeStamp();
-
-						// The path is a directory. Check if directory listing is allowed
-						if(permitDirectoryListing == 1) {
-							console.log(timeStamp + ": Location identified as directory. Displaying contents.");
-							fs.readdir(url, function (err, files) {
-								if (err) {
-									throw err;
-								} else {
-									//res.setHeader("Content-Length", files.length);
-									res.setHeader("Content-Type", "text/html");
-									//res.statusCode = 200;
-									res.write('<!doctype html><html><head><title>Index of ' + 
-										req.url + '</title></head><body bgcolor="white"><h1>Index of ' + 
-										req.url + '</h1><hr><pre>Path/Filename<br/>-------------<br/><a href="../">../</a><br/>'
-									);
-									var filesSorted = [];
-									var dirsSorted = [];
-
-									files.forEach(function(file) {
-										var fileObj = url + file;
-										stats = fs.lstatSync(fileObj);
-										if(stats.isDirectory()) {
-											dirsSorted.push({
-												"dirname" : file,
-												"creation" : stats['birthtime']
-											});
-										} else {
-											filesSorted.push({
-												"filename" : file,
-												"size" : stats['size'],
-												"creation" : stats['birthtime']
-											});
-										}
-									});
-
-									dirsSorted.sort().forEach(function(dir) {
-										var content = '<a href="' + dir.dirname + '/">' + dir.dirname + '/</a>';
-										var characters = dir.dirname.toString().length;
-										var spaces = 99-characters;
-										for(i=0; i<spaces; i++) {
-											content += " ";
-										}
-										content += dir.creation + '<br/>';
-										res.write(content);
-									});
-									filesSorted.sort().forEach(function(file) {
-										var content = '<a href="' + file.filename + '">' + file.filename + '</a>';
-										var characters = file.filename.toString().length;
-										var spaces = 100-characters;
-										for(i=0; i<spaces; i++) {
-											content += " ";
-										}
-										content += file.creation + '          -          ' + file.size + '<br/>';
-										res.write(content);
-									});
-									res.end('</pre><hr></body></html>');
-								}
-							});
-						} else {
-							console.log(timeStamp + ": Location identified as directory. Directory listing DENIED.");
-							res.writeHead(403);
-							res.end(error403);
-						}
-					}
+					});
 				} else {
-					// This path does not exist. It may be an API request.
-					if(enableAPI == 1) {
-						processAPI(req, res);
-					} else {
-						console.log(timeStamp + ": Location requested does not exist. Returning 404.");
-						res.writeHead(404);
-						res.end(error404);
-					}
-
+					console.log(customServer.timeStamp() + ": File extension '" + ext + "' is INVALID. Returning 500.");
+					customServer.error("500A", res);
 				}
-			});
-		}
-	} else {
-		// A POST action was requested
-		if(enableAPI == 1) {
-			processAPI(req, res);
-		} else {
-			// Ignore the request and do nothing.
-			res.statusCode = 200;
-			res.end();
-		}
+			} else {
+				console.log(customServer.timeStamp() + ": Client requested a location or API.");
+				fs.stat(customServer.url, function(err, stat){
+					if(err === null) {
+						// This path exists. It is either a directory listing request or a file without an extension.
+						if(!stat.isDirectory) {
+							// The path is a file. Check if unknown file types are permitted.
+							if(permitUnknownFiles == 1) {
+								console.log(customServer.timeStamp() + ": Location identified as unknown file type. Processing as " + 
+									unknownFileType + ".");
+								this.getFile(customServer.url, res, unknownFileType);
+							} else {
+								console.log(customServer.timeStamp() + ": Location identified as unknown file type. Returning 500.")
+								customServer.error("500A", res);
+							}
+						} else {
+							// The path is a directory. Check if directory listing is allowed
+							if(permitDirectoryListing == 1) {
+								console.log(customServer.timeStamp() + ": Location identified as directory. Displaying contents.");
+								this.getDir();
+							} else {
+								console.log(customServer.timeStamp() + ": Location identified as directory. Directory listing DENIED.");
+								customServer.error("403", res);
+							}
+						}
+					} else {
+						// This path does not exist. It may be an API request.
+						if(enableAPI == 1) {
+							processAPI(req, res);
+						} else {
+							console.log(customServer.timeStamp() + ": Location requested does not exist. Returning 404.");
+							customServer.error("404", res);
+						}
+
+					}
+				});
+			}
+		}).listen(port, serverUrl);
 	}
-}).listen(port, serverUrl);
+}
+
+customServer.init();
