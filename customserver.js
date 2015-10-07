@@ -2,26 +2,6 @@
  * Copyright Damon Kaswell, 2015
  * Released under the Apache 2.0 License. Do with it as you will, so long as it
  * is in accordance with this licence.
- *
- * MANIFESTO
- * The goal here is to include the minimum set of built-in modules to handle
- * everything a regular web server needs to be able to handle. A web server
- * should:
- *    - Allow access to standard file types (HTML, images, etc.)
- *    - Elegantly handle bad URLs
- *    - Accept GET and POST requests (For interactive apps)
- *
- * The end result should be a server that is usable for static pages
- * immediately, and is quick and easy to customize for interactive pages with
- * a minimum of fuss.
- *
- * This is NOT a server that needs an extensive set of add-on modules to be
- * fully functional. It is ideal for the frontend developer who wants to just
- * start writing HTML and JavaScript immediately and have it work.
- *
- * To develop interactive apps that send, receive, and store data in a
- * database or file on the node.js host, you will of course need whatever
- * modules are required for that project.
  */
 
 // Basic requires
