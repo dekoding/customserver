@@ -79,8 +79,7 @@ var unknownFileType = "text/html";
  */
 var enableAPI = 0;
 function processAPI(req, res) {
-	timeStamp = getTimeStamp();
-	console.log(timeStamp + ": PLACEHOLDER: Please customize processAPI()." + 
+	console.log(customServer.timeStamp() + ": PLACEHOLDER: Please customize processAPI()." + 
 		"Requested URL was " + req.url);
 	res.end("PLACEHOLDER: Please customize processAPI()." + 
 		"Requested URL was " + req.url);
