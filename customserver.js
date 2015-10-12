@@ -22,8 +22,12 @@ var qs = require('querystring');
  */
 
 // Server port and URL configuration
-var port = 1337;
+var httpPort = 1337;
 var serverUrl = "127.0.0.1";
+
+// Default app location and HTML file.
+var appDir = "./app/";
+var defaultHTML = "index.html";
 
 // Error handling
 var error400 = '<!doctype html><html><head><title>400</title></head><body><h1>400</h1>' + 
@@ -39,17 +43,13 @@ var error500A = '<!doctype html><html><head><title>500</title></head><body><h1>5
 var error500B = '<!doctype html><html><head><title>500</title></head><body><h1>500</h1>' + 
 	'<p>Internal server error! Check your link and try again.</body></html>';
 
-// Default app location and HTML file.
-var appDir = "./app/";
-var defaultHTML = "index.html";
-
-// Default file extensions
+/* Default file extensions
+ *
+ * A complete list of mimetypes is available at:
+ * http://www.iana.org/assignments/media-types/media-types.xhtml
+ */
 var validExtensions = {
-	/* Uncomment the following if you run PHP on your server and need
-	 * to be able to pass commands to it.
-	 */
-
-	//".php" : "application/php",
+	//".php" : "application/php", // Uncommment if you run PHP on your server and need to be able to pass it commands.
 	".html" : "text/html",			
 	".js": "application/javascript",
 	".json": "application/json", 
@@ -59,10 +59,6 @@ var validExtensions = {
 	".gif": "image/gif",
 	".png": "image/png",
 	".ico": "image/ico"
-	/* 
-	 * A complete list of mimetypes is available at:
-	 * http://www.iana.org/assignments/media-types/media-types.xhtml
-	 */
 };
 
 /* Files that don't have extensions.
@@ -73,6 +69,12 @@ var validExtensions = {
 var permitUnknownFiles = 0;
 var unknownFileType = "text/html";
 
+/* Directory listing
+ * To enable directory listing, set permitDirectoryListing to 1. Note that
+ * this may not be safe!
+ */
+var permitDirectoryListing = 0;
+
 /* API calls
  * To enable interactive features, set enableAPI to 1, and add your program's
  * interactive components to the function processAPI().
@@ -80,16 +82,10 @@ var unknownFileType = "text/html";
 var enableAPI = 0;
 function processAPI(req, res) {
 	console.log(customServer.timeStamp() + ": PLACEHOLDER: Please customize processAPI()." + 
-		"Requested URL was " + req.url);
+		"Requested URL was " + req.url + " and requested method was " + req.method);
 	res.end("PLACEHOLDER: Please customize processAPI()." + 
-		"Requested URL was " + req.url);
+		"Requested URL was " + req.url + " and requested method was " + req.method);
 }
-
-/* Directory listing
- * To enable directory listing, set permitDirectoryListing to 1. Note that
- * this may not be safe!
- */
-var permitDirectoryListing = 0;
 
 /* END USER CONFIGURATION
  *
@@ -132,13 +128,13 @@ var customServer = {
 		return date.join("/") + " " + time.join(":") + " " + suffix;
 	},
 
-	getFile : function(filename, res, mimeType) {
+	getFile : function(filename, res, ext) {
 		fs.readFile(filename, function(err, contents) {
 			if(err) {
 				customServer.error("500B");
 			} else {
 				res.setHeader("Content-Length", contents.length);
-				res.setHeader("Content-Type", validExtensions[mimeType]);
+				res.setHeader("Content-Type", validExtensions[ext]);
 				res.statusCode = 200;
 				res.write(contents);
 				res.end();
@@ -200,20 +196,33 @@ var customServer = {
 
 	error : function(type, res) {
 		switch(type) {
+			case "400": res.writeHead(400); res.end(error400); break;
+			case "401": res.writeHead(401); res.end(error401); break;
 			case "403": res.writeHead(403); res.end(error403); break;
 			case "404": res.writeHead(404); res.end(error404); break;
 			case "500A" : res.writeHead(500); res.end(error500A); break;
+			case "500B" : res.writeHead(500); res.end(error500B); break;
 			default : res.writeHead(500); res.end(error500B);
 		}
 	},
 
 	init : function(req, res) {
-		console.log(customServer.timeStamp() + ": Web server starting on " + serverUrl + ":" + port);
+		console.log(customServer.timeStamp() + ": Web server starting on " + serverUrl + ":" + httpPort);
 		http.createServer( function(req, res) {
 			console.log(customServer.timeStamp() + ": New client request: " + req.url + " - Method: " + req.method);
 
-			//Scope is important- this url value will remain isolated to the context of this particular client request
+			// Scope is important- this url value will remain isolated to the context of this particular client request
 			var url;
+
+			if(req.method === 'POST') {
+				if(enableAPI === 1) {
+					// Bypass everything else and go straight to processAPI, since something has been posted.
+					processAPI(req, res);
+				} else {
+					// Posting is not allowed to this server. Return 500 error.
+					customServer.error("500B", res);
+				}
+			}
 			
 			if(req.url=="/") {
 				// Top-level request. Set URL to default.
@@ -233,7 +242,6 @@ var customServer = {
 					fs.stat(url, function(err, stat){
 						if(err === null) {
 							console.log(customServer.timeStamp() + ": File is AVAILABLE. Providing to client.");
-							customServer.fileCount += 1;
 							customServer.getFile(url, res, ext); 
 						} else {
 							console.log(customServer.timeStamp() + ": File is UNAVAILABLE. Returning 404.");
@@ -281,7 +289,7 @@ var customServer = {
 					}
 				});
 			}
-		}).listen(port, serverUrl);
+		}).listen(httpPort, serverUrl);
 	}
 }
 
