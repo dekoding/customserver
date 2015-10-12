@@ -102,7 +102,6 @@ var permitDirectoryListing = 0;
 
 // 4. Build server
 var customServer = {
-	url : '',
 
 	timeStamp : function() {
 		var now = new Date();
@@ -147,8 +146,8 @@ var customServer = {
 		});
 	},
 
-	getDir : function() {
-		fs.readdir(customServer.url, function (err, files) {
+	getDir : function(directoryName, res) {
+		fs.readdir(directoryName, function (err, files) {
 			if (err) {
 				throw err;
 			} else {
@@ -212,26 +211,30 @@ var customServer = {
 		console.log(customServer.timeStamp() + ": Web server starting on " + serverUrl + ":" + port);
 		http.createServer( function(req, res) {
 			console.log(customServer.timeStamp() + ": New client request: " + req.url + " - Method: " + req.method);
+
+			//Scope is important- this url value will remain isolated to the context of this particular client request
+			var url;
+			
 			if(req.url=="/") {
 				// Top-level request. Set URL to default.
-				customServer.url = appDir + defaultHTML;
+				url = appDir + defaultHTML;
 			} else {
 				// Requested a specific file, location, or API.
-				customServer.url = appDir + req.url;
+				url = appDir + req.url;
 			}
-			if(path.extname(customServer.url)) {
+			if(path.extname(url)) {
 				// A specific file was requested. Get the extension.
 				console.log(customServer.timeStamp() + ": Client requested a file. Testing extension validity...");
-				var ext = path.extname(customServer.url);
+				var ext = path.extname(url);
 				var isValidExt = validExtensions[ext];
 				if (isValidExt) {
 					console.log(customServer.timeStamp() + ": File extension " + ext + " is VALID. Testing availability...");
 					// The extension is valid. Serve the file up if it's available..
-					fs.stat(customServer.url, function(err, stat){
+					fs.stat(url, function(err, stat){
 						if(err === null) {
 							console.log(customServer.timeStamp() + ": File is AVAILABLE. Providing to client.");
 							customServer.fileCount += 1;
-							customServer.getFile(customServer.url, res, ext); 
+							customServer.getFile(url, res, ext); 
 						} else {
 							console.log(customServer.timeStamp() + ": File is UNAVAILABLE. Returning 404.");
 							customServer.error("404", res);
@@ -243,7 +246,7 @@ var customServer = {
 				}
 			} else {
 				console.log(customServer.timeStamp() + ": Client requested a location or API.");
-				fs.stat(customServer.url, function(err, stat){
+				fs.stat(url, function(err, stat){
 					if(err === null) {
 						// This path exists. It is either a directory listing request or a file without an extension.
 						if(!stat.isDirectory) {
@@ -251,7 +254,7 @@ var customServer = {
 							if(permitUnknownFiles == 1) {
 								console.log(customServer.timeStamp() + ": Location identified as unknown file type. Processing as " + 
 									unknownFileType + ".");
-								this.getFile(customServer.url, res, unknownFileType);
+								this.getFile(url, res, unknownFileType);
 							} else {
 								console.log(customServer.timeStamp() + ": Location identified as unknown file type. Returning 500.")
 								customServer.error("500A", res);
