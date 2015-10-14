@@ -180,6 +180,26 @@ var customServer = {
 		});
 	},
 
+	getUnknownFile : function(filename, res) {
+		var mimetype;
+		var OS = os.platform();
+		if(OS === "linux") {
+			exec('file -b --mime-type ' + filename, function(error, stdout, stderr) {
+				if(error === null) {
+					console.log(customServer.timeStamp() + ": Mimetype identified as: " + stdout);
+					mimetype = stdout;
+					customServer.getFile(filename, res, mimetype);
+				} else {
+					console.log(customServer.timeStamp() + ": Unable to execute mimetype detection! Threw error: " + error);
+					customServer.error("500B", res);
+				}
+			});
+		} else {
+			console.log(customServer.timeStamp() + ": Operating system type '" + OS + "' is UNSUPPORTED! Returning error 500.");
+			customServer.error("500B", res);
+		}
+	},
+
 	getDir : function(directory, req, res) {
 		var trailingSlash = req.url.substr(req.url.length - 1);
 		if(trailingSlash === "/" ) {
@@ -263,26 +283,6 @@ var customServer = {
 				res.end();
 			}
 		});
-	},
-
-	getUnknownFile : function(filename, res) {
-		var mimetype;
-		var OS = os.platform();
-		if(OS === "linux") {
-			exec('file -b --mime-type ' + filename, function(error, stdout, stderr) {
-				if(error === null) {
-					console.log(customServer.timeStamp() + ": Mimetype identified as: " + stdout);
-					mimetype = stdout;
-					customServer.getFile(filename, res, mimetype);
-				} else {
-					console.log(customServer.timeStamp() + ": Unable to execute mimetype detection! Threw error: " + error);
-					customServer.error("500B", res);
-				}
-			});
-		} else {
-			console.log(customServer.timeStamp() + ": Operating system type '" + OS + "' is UNSUPPORTED! Returning error 500.");
-			customServer.error("500B", res);
-		}
 	},
 
 	process : function(req, res) {
