@@ -91,7 +91,7 @@ var ALLOW_UNKNOWN_FILETYPES = 0;
  * 
  * NOTES: This is not necessarily safe!
  */
-var ALLOW_DIR_LISTING = 1;
+var ALLOW_DIR_LISTING = 0;
 
 /* API CALLS
  * To enable interactive features, set ENABLE_API to 1, and add your program's
