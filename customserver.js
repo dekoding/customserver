@@ -2,53 +2,70 @@
  * Copyright Damon Kaswell, 2015
  * Released under the Apache 2.0 License. Do with it as you will, so long as it
  * is in accordance with this licence.
+ *
+ * CustomServer is designed with the idea of being both easily customized and
+ * easy to implement as-is. The default options are intended to be both sane for
+ * developers and easily understood 
  */
 
-// Basic requires
-var http = require('http');
-var fs = require('fs');
-var path = require('path');
-var qs = require('querystring');
-
 ///////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////
+//////////////////////////USER CONFIGURATION///////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-/* USER CONFIGURATION
- *
- * Make most changes here to suit your needs. Everything else can also be
- * changed as necessary, but unless you really know what you're doing,
- * CustomServer is designed with most common customizations here.
+/* Make most changes in the section below to suit your needs. Everything else
+ * can also be modified as necessary, but unless you really know what you're
+ * doing, CustomServer is designed with most common customizations here.
  */
 
-// Server port and URL configuration
-var httpPort = 1337;
-var serverUrl = "127.0.0.1";
+/* SERVER ADDRESS AND PORT
+ * If you need the server to wait on additional addresses and/or ports, you
+ * can add them here. By default, CustomServer will only wait on the
+ * loopback address, 127.0.0.1, to ensure that the server is not accessible
+ * from other computers.
+ */
+var SERVER_ADDRESSES = [ '127.0.0.1' ];
+var SERVER_PORTS = [ 1337 ];
 
-// Default app location and HTML file.
-var appDir = "./app/";
-var defaultHTML = "index.html";
+/* SSL
+ * If your server will require SSL, set USE_SSL = 1 and tell CustomServer
+ * the paths for your key and cert files. You can also customize the port
+ * used by SSL.
+ */
+var USE_SSL = 0;
+var KEY = '/path/to/key';
+var CERT = '/path/to/cert';
+var SSL_PORTS = [ 443 ];
 
-// Error handling
-var error400 = '<!doctype html><html><head><title>400</title></head><body><h1>400</h1>' + 
-	'<p>Invalid command issued to server! Check your link and try again.</p></body></html>';
-var error401 = '<!doctype html><html><head><title>401</title></head><body><h1>401</h1>' + 
-	'<p>Access denied!</p></body></html>';
-var error403 = '<!doctype html><html><head><title>403</title></head><body><h1>403</h1>' + 
-	'<p>Directory listing denied!</p></body></html>';
-var error404 = '<!doctype html><html><head><title>404</title></head><body><h1>404</h1>' + 
-	'<p>File or resource not found! Check your link and try again.</p></body></html>';
-var error500A = '<!doctype html><html><head><title>500</title></head><body><h1>500</h1>' + 
-	'<p>File or resource type not recognized! Check your link and try again.</p></body></html>';
-var error500B = '<!doctype html><html><head><title>500</title></head><body><h1>500</h1>' + 
-	'<p>Internal server error! Check your link and try again.</body></html>';
+/* DEFAULT PATH AND HTML
+ * You can customize the default application directory and HTML file used by
+ * CustomServer here.
+ */
+var APP_DIR = "./app";
+var DEFAULT_HTML = 'index.html';
 
-/* Default file extensions
+/* DEFAULT ERROR HANDLING
+ * If you want specific errors to be displayed during specific failures,
+ * modify the files below or add your own.
+ */
+var ERROR_400 = './resources/error400.html';
+var ERROR_401 = './resources/error401.html';
+var ERROR_403 = './resources/error403.html';
+var ERROR_404 = './resources/error404.html';
+var ERROR_500A = './resources/error500A.html';
+var ERROR_500B = './resources/error500B.html';
+
+/* DEFAULT MIME TYPES
+ * CustomServer will automatically handle any file with the following file
+ * extensions as their associated mimetypes. If the server is configured to
+ * permit unknown/unrecognized file types, such as those with different
+ * extensions, CustomServer will attempt to autodetect the file's mimetype.
  *
- * A complete list of mimetypes is available at:
+ * NOTE 1: Autodetection is ONLY supported on Linux and Windows!
+ *
+ * NOTE 2: A complete list of mimetypes is available at:
  * http://www.iana.org/assignments/media-types/media-types.xhtml
  */
-var validExtensions = {
+var EXTENSIONS = {
 	//".php" : "application/php", // Uncommment if you run PHP on your server and need to be able to pass it commands.
 	".html" : "text/html",			
 	".js": "application/javascript",
@@ -61,25 +78,27 @@ var validExtensions = {
 	".ico": "image/ico"
 };
 
-/* Files that don't have extensions.
+/* UNRECOGNiZED FILE TYPES
+ * To permit files that have unknown extensions or don't have extensions to
+ * be processed, change ALLOW_UNKNOWN_FILETYPES to 1.
  *
- * To permit files that don't have any file extensions to be processed,
- * change permitUnknownFiles to 1. Note that this may not be safe!
+ * NOTE: This is not necessarily safe!
  */
-var permitUnknownFiles = 0;
-var unknownFileType = "text/html";
+var ALLOW_UNKNOWN_FILETYPES = 0;
 
-/* Directory listing
- * To enable directory listing, set permitDirectoryListing to 1. Note that
- * this may not be safe!
+/* DIRECTORY LISTING
+ * To enable directory listing, set ALLOW_DIR_LISTING to 1.
+ * 
+ * NOTES: This is not necessarily safe!
  */
-var permitDirectoryListing = 0;
+var ALLOW_DIR_LISTING = 1;
 
-/* API calls
- * To enable interactive features, set enableAPI to 1, and add your program's
+/* API CALLS
+ * To enable interactive features, set ENABLE_API to 1, and add your program's
  * interactive components to the function processAPI().
  */
-var enableAPI = 0;
+var ENABLE_API = 0;
+
 function processAPI(req, res) {
 	console.log(customServer.timeStamp() + ": PLACEHOLDER: Please customize processAPI()." + 
 		"Requested URL was " + req.url + " and requested method was " + req.method);
@@ -96,7 +115,26 @@ function processAPI(req, res) {
 ///////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-// 4. Build server
+// Basic setup
+if(USE_SSL===1) {
+	var https = require('https');
+	var SSL_OPTIONS = {
+		key: fs.readFileSync(KEY),
+		cert: fs.readFileSync(CERT)
+	};
+} else {
+	var http = require('http');
+}
+
+if(ALLOW_UNKNOWN_FILETYPES === 1 || ALLOW_DIR_LISTING === 1) {
+	var os = require('os');
+	var exec = require('child_process').exec;
+}
+var fs = require('fs');
+var path = require('path');
+var qs = require('querystring');
+
+// Build server
 var customServer = {
 
 	timeStamp : function() {
@@ -128,13 +166,13 @@ var customServer = {
 		return date.join("/") + " " + time.join(":") + " " + suffix;
 	},
 
-	getFile : function(filename, res, ext) {
+	getFile : function(filename, res, mimetype) {
 		fs.readFile(filename, function(err, contents) {
 			if(err) {
 				customServer.error("500B");
 			} else {
 				res.setHeader("Content-Length", contents.length);
-				res.setHeader("Content-Type", validExtensions[ext]);
+				res.setHeader("Content-Type", mimetype);
 				res.statusCode = 200;
 				res.write(contents);
 				res.end();
@@ -142,154 +180,224 @@ var customServer = {
 		});
 	},
 
-	getDir : function(directoryName, res) {
-		fs.readdir(directoryName, function (err, files) {
-			if (err) {
-				throw err;
+	getDir : function(directory, req, res) {
+		var trailingSlash = req.url.substr(req.url.length - 1);
+		if(trailingSlash === "/" ) {
+			var url = req.url;
+			fs.readdir(directory, function (err, files) {
+				if (err) {
+					throw err;
+				} else {
+					res.setHeader("Content-Type", "text/html");
+					res.write('<!doctype html><html><head><title>Index of ' + url + '</title></head><body bgcolor="white"><h1>Index of ' + url + '</h1><hr><pre>Path/Filename<br/>-------------<br/><a href="../">../</a><br/>');
+					var filesSorted = [];
+					var dirsSorted = [];
+
+					files.forEach(function(file) {
+						var fileObj = directory + file;
+						stats = fs.lstatSync(fileObj);
+						if(stats.isDirectory()) {
+							dirsSorted.push({
+								"dirname" : file,
+								"creation" : stats['birthtime']
+							});
+						} else {
+							filesSorted.push({
+								"filename" : file,
+								"size" : stats['size'],
+								"creation" : stats['birthtime']
+							});
+						}
+					});
+
+					dirsSorted.sort().forEach(function(dir) {
+						var content = '<a href="' + dir.dirname + '/">' + dir.dirname + '/</a>';
+						var characters = dir.dirname.toString().length;
+						var spaces = 99-characters;
+						for(i=0; i<spaces; i++) {
+							content += " ";
+						}
+						content += dir.creation + '<br/>';
+						res.write(content);
+					});
+					filesSorted.sort().forEach(function(file) {
+						var content = '<a href="' + file.filename + '">' + file.filename + '</a>';
+						var characters = file.filename.toString().length;
+						var spaces = 100-characters;
+						for(i=0; i<spaces; i++) {
+							content += " ";
+						}
+						content += file.creation + '          -          ' + file.size + '<br/>';
+						res.write(content);
+					});
+					res.end('</pre><hr></body></html>');
+				}
+			});
+		} else {
+			res.writeHead(301,
+				{Location: req.url + "/"}
+			);
+			res.end();
+		}
+	},
+
+	error : function(type, res) {
+		var file;
+		switch(type) {
+			case "400": var head=400; file = ERROR_400; break;
+			case "401": var head=401; file = ERROR_401; break;
+			case "403": var head=403; file = ERROR_403; break;
+			case "404": var head=404; file = ERROR_404; break;
+			case "500A": var head=500; file = ERROR_500A; break;
+			case "500B": var head=500; file = ERROR_500B; break;
+			default : var head=500; file = ERROR_500B;
+		}
+		fs.readFile(file, function(err, contents) {
+			if(err) {
+				console.log(customServer.timeStamp() + ": Internal error! Unable to parse error message for display! Switching to failsafe error.");
+				res.writeHead(500);
+				res.end('The server has experienced a critical internal error.');
 			} else {
-				res.setHeader("Content-Type", "text/html");
-				res.write('<!doctype html><html><head><title>Index of ' + req.url + '</title></head><body bgcolor="white"><h1>Index of ' + req.url + '</h1><hr><pre>Path/Filename<br/>-------------<br/><a href="../">../</a><br/>');
-				var filesSorted = [];
-				var dirsSorted = [];
-
-				files.forEach(function(file) {
-					var fileObj = customServer.url + file;
-					stats = fs.lstatSync(fileObj);
-					if(stats.isDirectory()) {
-						dirsSorted.push({
-							"dirname" : file,
-							"creation" : stats['birthtime']
-						});
-					} else {
-						filesSorted.push({
-							"filename" : file,
-							"size" : stats['size'],
-							"creation" : stats['birthtime']
-						});
-					}
-				});
-
-				dirsSorted.sort().forEach(function(dir) {
-					var content = '<a href="' + dir.dirname + '/">' + dir.dirname + '/</a>';
-					var characters = dir.dirname.toString().length;
-					var spaces = 99-characters;
-					for(i=0; i<spaces; i++) {
-						content += " ";
-					}
-					content += dir.creation + '<br/>';
-					res.write(content);
-				});
-				filesSorted.sort().forEach(function(file) {
-					var content = '<a href="' + file.filename + '">' + file.filename + '</a>';
-					var characters = file.filename.toString().length;
-					var spaces = 100-characters;
-					for(i=0; i<spaces; i++) {
-						content += " ";
-					}
-					content += file.creation + '          -          ' + file.size + '<br/>';
-					res.write(content);
-				});
-				res.end('</pre><hr></body></html>');
+				res.writeHead(head, {"Content-Type": "text/html"});
+				res.write(contents);
+				res.end();
 			}
 		});
 	},
 
-	error : function(type, res) {
-		switch(type) {
-			case "400": res.writeHead(400); res.end(error400); break;
-			case "401": res.writeHead(401); res.end(error401); break;
-			case "403": res.writeHead(403); res.end(error403); break;
-			case "404": res.writeHead(404); res.end(error404); break;
-			case "500A" : res.writeHead(500); res.end(error500A); break;
-			case "500B" : res.writeHead(500); res.end(error500B); break;
-			default : res.writeHead(500); res.end(error500B);
+	getUnknownFile : function(filename, res) {
+		var mimetype;
+		var OS = os.platform();
+		if(OS === "linux") {
+			exec('file -b --mime-type ' + filename, function(error, stdout, stderr) {
+				if(error === null) {
+					console.log(customServer.timeStamp() + ": Mimetype identified as: " + stdout);
+					mimetype = stdout;
+					customServer.getFile(filename, res, mimetype);
+				} else {
+					console.log(customServer.timeStamp() + ": Unable to execute mimetype detection! Threw error: " + error);
+					customServer.error("500B", res);
+				}
+			});
+		} else {
+			console.log(customServer.timeStamp() + ": Operating system type '" + OS + "' is UNSUPPORTED! Returning error 500.");
+			customServer.error("500B", res);
 		}
 	},
 
-	init : function(req, res) {
-		console.log(customServer.timeStamp() + ": Web server starting on " + serverUrl + ":" + httpPort);
-		http.createServer( function(req, res) {
-			console.log(customServer.timeStamp() + ": New client request: " + req.url + " - Method: " + req.method);
-
-			// Scope is important- this url value will remain isolated to the context of this particular client request
-			var url;
-
-			if(req.method === 'POST') {
-				if(enableAPI === 1) {
-					// Bypass everything else and go straight to processAPI, since something has been posted.
-					processAPI(req, res);
-				} else {
-					// Posting is not allowed to this server. Return 500 error.
-					customServer.error("500B", res);
-				}
-			}
-			
-			if(req.url=="/") {
-				// Top-level request. Set URL to default.
-				url = appDir + defaultHTML;
+	process : function(req, res) {
+		if(req.method === 'POST') {
+			if(ENABLE_API === 1) {
+				// Bypass everything else and go straight to processAPI, since something has been posted.
+				console.log(customServer.timeStamp() + ": Client made POST request. Passing to processAPI().");
+				processAPI(req, res);
 			} else {
-				// Requested a specific file, location, or API.
-				url = appDir + req.url;
+				// Posting is not allowed to this server. Return 500 error.
+				console.log(customServer.timeStamp() + ": Client made unsupported POST request. Returning error 500.");
+				customServer.error("500B", res);
 			}
-			if(path.extname(url)) {
-				// A specific file was requested. Get the extension.
-				console.log(customServer.timeStamp() + ": Client requested a file. Testing extension validity...");
-				var ext = path.extname(url);
-				var isValidExt = validExtensions[ext];
-				if (isValidExt) {
-					console.log(customServer.timeStamp() + ": File extension " + ext + " is VALID. Testing availability...");
-					// The extension is valid. Serve the file up if it's available..
-					fs.stat(url, function(err, stat){
-						if(err === null) {
-							console.log(customServer.timeStamp() + ": File is AVAILABLE. Providing to client.");
-							customServer.getFile(url, res, ext); 
+		}
+
+		var url;
+
+		if(req.url === "/") {
+			// Top-level request. Set URL to default.
+			url = APP_DIR + "/" + DEFAULT_HTML;
+		} else {
+			// Requested a specific file, location, or API.
+			url = APP_DIR + req.url;
+		}
+		console.log(customServer.timeStamp() + ": Client requested: " + url);
+		fs.stat(url, function(err, stats){
+			if(err === null) {
+				// Client requested a file or directory
+				console.log(customServer.timeStamp() + ": Client requested a URL that EXISTS.");
+				if(stats.isFile()) {
+					// Client requested a file
+					console.log(customServer.timeStamp() + ": Requested URL is a file. Testing extension validity...");
+					var filename = url;
+
+					if(path.extname(filename)) {
+						// File has an extension. Check to see if it's on the list.
+						var ext = path.extname(filename);
+						var isValidExt = EXTENSIONS[ext];
+						if (isValidExt) {
+							// Extension is on the list. Serve it to the client
+							console.log(customServer.timeStamp() + ": File extension " + ext + " is KNOWN. Providing to client.");
+							customServer.getFile(filename, res, EXTENSIONS[ext]);
 						} else {
-							console.log(customServer.timeStamp() + ": File is UNAVAILABLE. Returning 404.");
-							customServer.error("404", res);
-						}
-					});
-				} else {
-					console.log(customServer.timeStamp() + ": File extension '" + ext + "' is INVALID. Returning 500.");
-					customServer.error("500A", res);
-				}
-			} else {
-				console.log(customServer.timeStamp() + ": Client requested a location or API.");
-				fs.stat(url, function(err, stat){
-					if(err === null) {
-						// This path exists. It is either a directory listing request or a file without an extension.
-						if(!stat.isDirectory) {
-							// The path is a file. Check if unknown file types are permitted.
-							if(permitUnknownFiles == 1) {
-								console.log(customServer.timeStamp() + ": Location identified as unknown file type. Processing as " + 
-									unknownFileType + ".");
-								this.getFile(url, res, unknownFileType);
+							// Extension is not on the list. Check if unknown extensions are allowed.
+							if(ALLOW_UNKNOWN_FILETYPES === 1) {
+								console.log(customServer.timeStamp() + ": File extension '" + ext + "' is UNKNOWN. Detecting mimetype...");
+								customServer.getUnknownFile(filename, res)
 							} else {
-								console.log(customServer.timeStamp() + ": Location identified as unknown file type. Returning 500.")
+								console.log(customServer.timeStamp() + ": File extension '" + ext + "' is UNKNOWN. Returning error 500.");
 								customServer.error("500A", res);
-							}
-						} else {
-							// The path is a directory. Check if directory listing is allowed
-							if(permitDirectoryListing == 1) {
-								console.log(customServer.timeStamp() + ": Location identified as directory. Displaying contents.");
-								this.getDir();
-							} else {
-								console.log(customServer.timeStamp() + ": Location identified as directory. Directory listing DENIED.");
-								customServer.error("403", res);
 							}
 						}
 					} else {
-						// This path does not exist. It may be an API request.
-						if(enableAPI == 1) {
-							processAPI(req, res);
+						// File does NOT have an extension and is NOT a directory. Unless unknown file types are allowed, throw an error.
+						if(ALLOW_UNKNOWN_FILETYPES === 1) {
+							console.log(customServer.timeStamp() + ": File has no extension. Detecting mimetype...");
+							customServer.getUnknownFile(filename, res)
 						} else {
-							console.log(customServer.timeStamp() + ": Location requested does not exist. Returning 404.");
-							customServer.error("404", res);
+							console.log(customServer.timeStamp() + ": File has no extension. Returning error 500.");
+							customServer.error("500A", res);
 						}
-
 					}
-				});
+				} else if(stats.isDirectory()) {
+					// Client requested a directory
+					if(ALLOW_DIR_LISTING === 1) {
+						console.log(customServer.timeStamp() + ": Requested URL is a directory. Returning directory listing...");
+						var directory = url;
+						customServer.getDir(directory, req, res);
+					} else {
+						console.log(customServer.timeStamp() + ": Requested URL is a directory. Directory listing denied.");
+						customServer.error("403", res);
+					}
+
+				} else {
+					// URL is a file without an extension.
+					console.log(customServer.timeStamp() + ": Requested URL is not an intelligible resource. Returning error 500.");
+					customServer.error("500B", res);
+				}
+			} else {
+				// Client requested a non-existent URL. Either use processAPI() or reject outright.
+				if(ENABLE_API === 1) {
+					// API processing is enabled. Pass control to processAPI() to decide what to do.
+					console.log(customServer.timeStamp() + ": Requested URL does not exist. Passing to processAPI() for further processing.");
+					processAPI(req, res);
+				} else {
+					console.log(customServer.timeStamp() + ": Requested URL does not exist. Returning error 404.");
+					customServer.error("404", res);
+				}
 			}
-		}).listen(httpPort, serverUrl);
+		});
+	},
+
+	init : function(req, res) {
+		if(USE_SSL === 1) {
+			// Starting a secure server.
+			console.log(customServer.timeStamp() + ": CustomServer starting in SSL mode on these addresses/ports:");
+			SERVER_ADDRESSES.forEach(function(address) {
+				SSL_PORTS.forEach(function(port) {
+					console.log("                       " + address + "/" + port);
+					https.createServer(SSL_OPTIONS, function (req, res) {
+						customServer.process(req, res);
+					}).listen(port, address);
+				});
+			});
+		} else {
+			console.log(customServer.timeStamp() + ": CustomServer starting on these addresses/ports:");
+			SERVER_ADDRESSES.forEach(function(address) {
+				SERVER_PORTS.forEach(function(port) {
+					console.log("                       " + address + "/" + port);
+					http.createServer(function (req, res) {
+						customServer.process(req, res);
+					}).listen(port, address);
+				});
+			});
+		}
 	}
 }
 
