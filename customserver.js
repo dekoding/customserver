@@ -106,6 +106,11 @@ function processAPI(req, res) {
 		"Requested URL was " + req.url + " and requested method was " + req.method);
 }
 
+/* ADDITIONAL REQUIRES
+ * If you're using the API, you probably need additional modules. Add them here.
+ */
+//var MyModule = require('mymodule');
+
 /* END USER CONFIGURATION
  *
  * If you really need to make more customizations, feel free to do so.
