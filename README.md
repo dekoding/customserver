@@ -38,7 +38,7 @@ The built-in customization options for CustomServer are detailed below:
                             var SERVER_ADDRESSES = [ "192.168.1.1", "10.0.0.1" ];
                             ```
 							<p>Default value:</p>
-							```Javascript
+							```javascript
 							[ "127.0.0.1" ]
 							```
                         </td>
