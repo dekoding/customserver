@@ -1,58 +1,73 @@
 /* Custom Server 0.0.1
  * Copyright Damon Kaswell, 2015
- * Released under the Apache 2.0 License. Do with it as you will, so long as it
- * is in accordance with this licence.
+ * Released under the Apache 2.0 License. Do with it as you will, so long
+ * as it is in accordance with this licence.
  *
- * CustomServer is designed with the idea of being both easily customized and
- * easy to implement as-is. The default options are intended to be both sane for
- * developers and easily understood 
- */
+ * CustomServer is designed with the idea of being both easily customized
+ * and easy to implement as-is. The default options are intended to be both
+ * sane for developers and easily understood  */
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////////////////USER CONFIGURATION///////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-/* Make most changes in the section below to suit your needs. Everything else
- * can also be modified as necessary, but unless you really know what you're
- * doing, CustomServer is designed with most common customizations here.
- */
+/* Make most changes in the section below to suit your needs. Everything
+ * else can also be modified as necessary, but unless you really know what
+ * you're doing, CustomServer is designed with most common customizations
+ * here. */
 
 /* SERVER ADDRESS AND PORT
  * If you need the server to wait on additional addresses and/or ports, you
  * can add them here. By default, CustomServer will only wait on the
  * loopback address, 127.0.0.1, to ensure that the server is not accessible
- * from other computers.
- */
+ * from other computers. */
 var SERVER_ADDRESSES = [ '127.0.0.1' ];
 var SERVER_PORTS = [ 1337 ];
 
 /* SSL
  * If your server will require SSL, set USE_SSL = 1 and tell CustomServer
  * the paths for your key and cert files. You can also customize the port
- * used by SSL.
- */
+ * used by SSL. */
 var USE_SSL = 0;
 var KEY = '/path/to/key';
 var CERT = '/path/to/cert';
 var SSL_PORTS = [ 443 ];
 
 /* DEFAULT PATH AND HTML
- * You can customize the default application directory and HTML file used by
- * CustomServer here.
- */
-var APP_DIR = "./app";
+ * You can customize the default application directory and HTML file used
+ * by CustomServer here. */
+var APP_DIR = './app';
 var DEFAULT_HTML = 'index.html';
 
 /* DEFAULT ERROR HANDLING
- * If you want specific errors to be displayed during specific failures,
- * modify the files below or add your own.
+ * By default, CustomServer automatically generates error pages for you. If
+ * you want to create your own error pages, then set USE_CUSTOM_ERROR_PAGES
+ * to 1. CustomServer expects error pages to be located in the folder
+ * specified in CUSTOM_ERROR_DIR.
+ * 
+ * Custom error pages should be named in the format <error_code>.html. For
+ * example, a 404 error will attempt to retrieve the file:
+ *
+ *			CUSTOM_ERROR_DIR + 404.html
+ *
  */
-var ERROR_400 = './resources/error400.html';
-var ERROR_401 = './resources/error401.html';
-var ERROR_403 = './resources/error403.html';
-var ERROR_404 = './resources/error404.html';
-var ERROR_500A = './resources/error500A.html';
-var ERROR_500B = './resources/error500B.html';
+var USE_CUSTOM_ERROR_FILES = 0;
+var CUSTOM_ERROR_DIR = './app';
+
+/* DEFAULT ERROR MESSAGES
+ * In addition to customizing the error pages, you can customize the message
+ * text used by CustomServer's default error handling.
+ *
+ * The following error codes should handle most use cases, but if you are
+ * customizing the server to process interactive requests and handle
+ * authentication, you will probably need to add more and make direct
+ * adjustments to the customServer.error() function. */
+
+var ERROR_400 = 'Invalid command issued to server! Check your link and try again.';
+var ERROR_401 = 'You are not authorized to access this resource.';
+var ERROR_403 = 'Directory listing denied.';
+var ERROR_404 = 'File or resource not found. Check your link and try again.';
+var ERROR_500 = 'Internal server error. The server cannot provide the resource requested. Check your link and try again.';
 
 /* DEFAULT MIME TYPES
  * CustomServer will automatically handle any file with the following file
@@ -60,13 +75,14 @@ var ERROR_500B = './resources/error500B.html';
  * permit unknown/unrecognized file types, such as those with different
  * extensions, CustomServer will attempt to autodetect the file's mimetype.
  *
- * NOTE 1: Autodetection is ONLY supported on Linux and Windows!
+ * NOTE 1: Autodetection is ONLY supported on Linux!
  *
  * NOTE 2: A complete list of mimetypes is available at:
- * http://www.iana.org/assignments/media-types/media-types.xhtml
- */
+ * http://www.iana.org/assignments/media-types/media-types.xhtml */
+
 var EXTENSIONS = {
-	//".php" : "application/php", // Uncommment if you run PHP on your server and need to be able to pass it commands.
+	// Uncommment if you run PHP and need to be able to pass it commands.
+	//".php" : "application/php",
 	".html" : "text/html",			
 	".js": "application/javascript",
 	".json": "application/json", 
@@ -80,7 +96,7 @@ var EXTENSIONS = {
 
 /* UNRECOGNiZED FILE TYPES
  * To permit files that have unknown extensions or don't have extensions to
- * be processed, change ALLOW_UNKNOWN_FILETYPES to 1.
+ * be processed, change ALLOW_UNKNOWN_FILETYPES to 1. Linux-only.
  *
  * NOTE: This is not necessarily safe!
  */
@@ -94,8 +110,8 @@ var ALLOW_UNKNOWN_FILETYPES = 0;
 var ALLOW_DIR_LISTING = 0;
 
 /* API CALLS
- * To enable interactive features, set ENABLE_API to 1, and add your program's
- * interactive components to the function processAPI().
+ * To enable interactive features, set ENABLE_API to 1, and add your
+ * program's interactive components to the function processAPI().
  */
 var ENABLE_API = 0;
 
@@ -107,7 +123,8 @@ function processAPI(req, res) {
 }
 
 /* ADDITIONAL REQUIRES
- * If you're using the API, you probably need additional modules. Add them here.
+ * If you're using the API, you probably need additional modules. Add them
+ * here.
  */
 //var MyModule = require('mymodule');
 
@@ -117,7 +134,7 @@ function processAPI(req, res) {
  */
 
 ///////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////
+/////////////////////////HERE THERE BE DRAGONS/////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
 // Basic setup
@@ -267,27 +284,65 @@ var customServer = {
 	},
 
 	error : function(type, res) {
-		var file;
-		switch(type) {
-			case "400": var head=400; file = ERROR_400; break;
-			case "401": var head=401; file = ERROR_401; break;
-			case "403": var head=403; file = ERROR_403; break;
-			case "404": var head=404; file = ERROR_404; break;
-			case "500A": var head=500; file = ERROR_500A; break;
-			case "500B": var head=500; file = ERROR_500B; break;
-			default : var head=500; file = ERROR_500B;
-		}
-		fs.readFile(file, function(err, contents) {
-			if(err) {
-				console.log(customServer.timeStamp() + ": Internal error! Unable to parse error message for display! Switching to failsafe error.");
-				res.writeHead(500);
-				res.end('The server has experienced a critical internal error.');
-			} else {
-				res.writeHead(head, {"Content-Type": "text/html"});
-				res.write(contents);
-				res.end();
+
+		var head;
+		if(USE_CUSTOM_ERROR_FILES === 1) {
+			// The error pages have been customized. Retrieve the appropriate page.
+			var errorFile;
+			switch(type) {
+				case "400": head = 400; errorFile = CUSTOM_ERROR_DIR + '/400.html'; break;
+				case "401": head = 401; errorFile = CUSTOM_ERROR_DIR + '/401.html'; break;
+				case "403": head = 403; errorFile = CUSTOM_ERROR_DIR + '/403.html'; break;
+				case "404": head = 404; errorFile = CUSTOM_ERROR_DIR + '/404.html'; break;
+				case "500": head = 500; errorFile = CUSTOM_ERROR_DIR + '/500.html'; break;
+				default : head = 500; errorFile = CUSTOM_ERROR_DIR + '/500.html'; break;
 			}
-		});
+			fs.readFile(errorFile, function(err, contents) {
+				if(err) {
+					console.log(customServer.timeStamp() + ": Internal error! Unable to parse error message for display! Switching to failsafe error.");
+					res.writeHead(500);
+					res.end('The server has experienced a critical internal error.');
+				} else {
+					res.writeHead(head, {"Content-Type": "text/html"});
+					res.write(contents);
+					res.end();
+				}
+			});
+		} else {
+			var errorText;
+			var head;
+			switch(type) {
+				case "400": head = 400; errorText = ERROR_400; break;
+				case "401": head = 401; errorText = ERROR_401; break;
+				case "403": head = 403; errorText = ERROR_403; break;
+				case "404": head = 404; errorText = ERROR_404; break;
+				case "500": head = 500; errorText = ERROR_500; break;
+				default : head = 500; errorText = ERROR_500;
+			}
+			res.writeHead(head);
+			res.write('<!DOCTYPE HTML>' +
+				'<html>' +
+				'<head>' +
+					'<meta charset="utf-8" />' +
+					'<meta name="author" content="Damon Kaswell" />' +
+					'<title>' + head + '</title>' +
+						'<link href="http://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet" type="text/css" />' +
+				        '<style>' +
+				            '.notice {' +
+				                'font-family: "Open Sans", arial, sans-serif;' +
+				                'padding: 10px;' +
+				                'border: 1px solid;' +
+				                'background: #979;' +
+				            '}' +
+				        '</style>' +
+				    '</head>' +
+					'<body>' +
+						'<h1>' + head + '</h1>' +
+						'<div class="notice">' + errorText + '</div>' +
+					'</body>' +
+				'</html>');
+			res.end();
+		}
 	},
 
 	process : function(req, res) {
