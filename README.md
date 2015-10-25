@@ -22,7 +22,7 @@ CustomServer starts the http process on `127.0.0.1:1337` by default. Anything yo
 ### Default options and customization
 The built-in customization options for CustomServer are detailed below:
 
-<table>
+<table style="font-size:0.8em;">
                 <thead>
                     <tr>
                         <th>Option</th>
