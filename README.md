@@ -22,94 +22,43 @@ CustomServer starts the http process on `127.0.0.1:1337` by default. Anything yo
 ### Default options and customization
 The built-in customization options for CustomServer are detailed below:
 
-| Option                    | Explanation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| SERVER_ADDRESSES          | This is an array of addresses. CustomServer will start a listener on each address specified.
-Example:
-```javascript
-var SERVER_ADDRESSES = [ "192.168.1.1", "10.0.0.1" ];
-```
-Default value:
-```javascript
-[ "127.0.0.1" ]
-```
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| SERVER_PORTS              | This is an array of ports. CustomServer will use each port you specify.
-Example:
-```javascript
-var SERVER_PORTS = [ 8080, 1234, 80 ];
-```
-Default value:
-```javascript
-[ 1337 ]
-```
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| USE_SSL                   | A value of 0 tells CustomServer to use HTTP. (Default)
-A value of 1 tells CustomServer to use HTTPS.
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| KEY                       | The path to the server's SSL key (only used if USE_SSL is set to 1)
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| CERT                      | The path to the server's SSL certificate (only used if USE_SSL is set to 1)
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| SSL_PORTS                 | This is an array of ports. CustomServer will use these ports if SSL is enabled.
-Example:
-```javascript
-var SSL_PORTS = [ 443, 567 ];
-```
-Default value:
-```javascript
-[ 443 ]
-```
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| APP_DIR                   | The path to the server's root directory
-Default value:
-`./app`
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| DEFAULT_HTML              | The default file to load if none is specified in the client request
-Default value:
-`index.html`
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| USE_CUSTOM_ERROR_FILES    | CustomServer provides default error messages, but if you want to use your own (for instance, a custom 404), set this to 1 and create your own error pages.
-Custom error files are in the format <error>.html. For example, 404.html.
-Default value: 0
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| CUSTOM_ERROR_DIR          | If you are using custom error pages, this is the directory they are pulled from. Usually, it's safe to keep this the same as the root ('./app') directory.
-Default value:
-`./app`
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| ERROR_*                   | Default text to display on an error page.
-Default value:
-`(varies)`
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| EXTENSIONS                | This associative array lists the extensions and associated mimetypes CustomServer can process by default. It can be added to as needed.
-Default value:
-```javascript
-{
-".html" : "text/html",          
-".js": "application/javascript",
-".json": "application/json", 
-".css": "text/css",
-".txt": "text/plain",
-".jpg": "image/jpeg",
-".gif": "image/gif",
-".png": "image/png",
-".ico": "image/ico"
-}
-```
-                                                                                                                                                                                                                                                                                                                                                                                                            |
-| ALLOW_UNKNOWN_FILETYPES   | A value of 0 tells CustomServer to reject attempts to access files with unrecognized extensions, even if they are present on the server. (Default)
-A value of 1 tells CustomServer to allow access to files with unrecognized extensions. CustomServer will attempt to recognize the file's mimetype automatically.
-NOTE: Mimetype detection is only supported on Linux at this time.
-                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| ALLOW_DIR_LISTING         | A value of 0 tells CustomServer to reject attempts to view directories. (Default)
-A value of 1 tells CustomServer to allow directory listing.
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| ENABLE_API                | This is the heart of CustomServer. All other options are for displaying static content. But most web apps need to be able to respond to things like POST requests and attempts to retrieve data in ways that involve instructing the server to perform certain tasks, rather than just displaying a file.
-If ENABLE_API is set to 1 (not default), CustomServer will pass all POSTs, and any GETs that request something other than a file or directory that is present on the server, to a function called `processAPI()`. It is this function's job to determine what needs to be done with the POST or GET it receives.
-By default, `processAPI()` only contains placeholders. It is up to the web developer to populate the function with appropriate mechanisms for responding to the POST and GET requests.
-     |
-
-CustomServer is released under the Apache 2.0 license, a very permissive license that allows you to use and customize it for nearly anything you can imagine. Please abide by its (very, very few) restrictions.
+Option | Explanation
+---|---
+`SERVER_ADDRESSES`|*This is an array of addresses. CustomServer will start a listener on each address specified.*
+&nbsp;|**Default value:** `[ "127.0.0.1" ]`
+&nbsp;|Example: `var SERVER_ADDRESSES = [ "192.168.1.1", "10.0.0.1" ]; `
+`SERVER_PORTS`|*This is an array of ports. CustomServer will use each port you specify.*
+&nbsp;|**Default value:** `[ 1337 ]`
+&nbsp;|Example: `var SERVER_PORTS = [ 8080, 1234, 80 ];`
+`USE_SSL`|*A value of 0 tells CustomServer to use HTTP. (Default)*
+&nbsp;|*A value of 1 tells CustomServer to use HTTPS.*
+`KEY`|*The path to the server's SSL key (only used if USE_SSL is set to 1)*
+`CERT`|*The path to the server's SSL certificate (only used if USE_SSL is set to 1)*
+`SSL_PORTS`|*This is an array of ports. CustomServer will use these ports if SSL is enabled.*
+&nbsp;|**Default value:** `[ 443 ]`
+&nbsp;|Example: `var SSL_PORTS = [ 443, 567 ];`
+`APP_DIR`|*The path to the server's root directory*
+&nbsp;|**Default value:** `./app`
+`DEFAULT_HTML`|*The default file to load if none is specified in the client request*
+&nbsp;|**Default value:** `index.html`
+`USE_CUSTOM_ERROR_FILES`|*CustomServer provides default error messages, but if you want to use your own (for instance, a custom 404), set this to 1 and create your own error pages.*
+&nbsp;|*Custom error files are in the format &lt;error&gt;.html. For example, 404.html.*
+&nbsp;|**Default value:** 0
+`CUSTOM_ERROR_DIR`|*If you are using custom error pages, this is the directory they are pulled from. Usually, it's safe to keep this the same as the root ('./app') directory.*
+&nbsp;|**Default value:** `./app`
+`ERROR_*`|*Default text to display on an error page.*
+&nbsp;|**Default value:** `(varies)`
+`EXTENSIONS|*This associative array lists the extensions and associated mimetypes CustomServer can process by default. It can be added to as needed.*
+&nbsp;|**Default value:**
+&nbsp;|```{ ".html" : "text/html", ".js": "application/javascript", ".json": "application/json", ".css": "text/css", ".txt": "text/plain", ".jpg": "image/jpeg", ".gif": "image/gif", ".png": "image/png", ".ico": "image/ico" }```
+`ALLOW_UNKNOWN_FILETYPES`|*A value of 0 tells CustomServer to reject attempts to access files with unrecognized extensions, even if they are present on the server. (Default)*
+&nbsp;|*A value of 1 tells CustomServer to allow access to files with unrecognized extensions. CustomServer will attempt to recognize the file's mimetype automatically.*
+&nbsp;|**NOTE:** Mimetype detection is only supported on Linux at this time.
+`ALLOW_DIR_LISTING|*A value of 0 tells CustomServer to reject attempts to view directories. (Default)*
+&nbsp;|*A value of 1 tells CustomServer to allow directory listing.*
+`ENABLE_API`|*This is the heart of CustomServer. All other options are for displaying static content. But most web apps need to be able to respond to things like POST requests and attempts to retrieve data in ways that involve instructing the server to perform certain tasks, rather than just displaying a file.*
+&nbsp;|*If ENABLE_API is set to 1 (not default), CustomServer will pass all POSTs, and any GETs that request something other than a file or directory that is present on the server, to a function called `processAPI()`. It is this function's job to determine what needs to be done with the POST or GET it receives.*
+&nbsp;|*By default, `processAPI()` only contains placeholders. It is up to the web developer to populate the function with appropriate mechanisms for responding to the POST and GET requests.*
 
 # TODO
 * Create a barebones NPM package for easy downloading
