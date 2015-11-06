@@ -105,7 +105,7 @@ var ALLOW_UNKNOWN_FILETYPES = 0;
 /* DIRECTORY LISTING
  * To enable directory listing, set ALLOW_DIR_LISTING to 1.
  * 
- * NOTES: This is not necessarily safe!
+ * NOTE: This is not necessarily safe!
  */
 var ALLOW_DIR_LISTING = 0;
 
