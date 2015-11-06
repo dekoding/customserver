@@ -191,7 +191,7 @@ var customServer = {
 	getFile : function(filename, res, mimetype) {
 		fs.readFile(filename, function(err, contents) {
 			if(err) {
-				customServer.error("500B");
+				customServer.error("500");
 			} else {
 				res.setHeader("Content-Length", contents.length);
 				res.setHeader("Content-Type", mimetype);
@@ -213,12 +213,12 @@ var customServer = {
 					customServer.getFile(filename, res, mimetype);
 				} else {
 					console.log(customServer.timeStamp() + ": Unable to execute mimetype detection! Threw error: " + error);
-					customServer.error("500B", res);
+					customServer.error("500", res);
 				}
 			});
 		} else {
 			console.log(customServer.timeStamp() + ": Operating system type '" + OS + "' is UNSUPPORTED! Returning error 500.");
-			customServer.error("500B", res);
+			customServer.error("500", res);
 		}
 	},
 
@@ -354,7 +354,7 @@ var customServer = {
 			} else {
 				// Posting is not allowed to this server. Return 500 error.
 				console.log(customServer.timeStamp() + ": Client made unsupported POST request. Returning error 500.");
-				customServer.error("500B", res);
+				customServer.error("500", res);
 			}
 		}
 
@@ -392,7 +392,7 @@ var customServer = {
 								customServer.getUnknownFile(filename, res)
 							} else {
 								console.log(customServer.timeStamp() + ": File extension '" + ext + "' is UNKNOWN. Returning error 500.");
-								customServer.error("500A", res);
+								customServer.error("500", res);
 							}
 						}
 					} else {
@@ -402,7 +402,7 @@ var customServer = {
 							customServer.getUnknownFile(filename, res)
 						} else {
 							console.log(customServer.timeStamp() + ": File has no extension. Returning error 500.");
-							customServer.error("500A", res);
+							customServer.error("500", res);
 						}
 					}
 				} else if(stats.isDirectory()) {
@@ -419,7 +419,7 @@ var customServer = {
 				} else {
 					// URL is a file without an extension.
 					console.log(customServer.timeStamp() + ": Requested URL is not an intelligible resource. Returning error 500.");
-					customServer.error("500B", res);
+					customServer.error("500", res);
 				}
 			} else {
 				// Client requested a non-existent URL. Either use processAPI() or reject outright.
