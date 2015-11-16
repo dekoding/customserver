@@ -48,13 +48,13 @@ Option | Explanation
 &nbsp;|**Default value:** `./app`
 `ERROR_*`|*Default text to display on an error page.*
 &nbsp;|**Default value:** `(varies)`
-`EXTENSIONS|*This associative array lists the extensions and associated mimetypes CustomServer can process by default. It can be added to as needed.*
+`EXTENSIONS`|*This associative array lists the extensions and associated mimetypes CustomServer can process by default. It can be added to as needed.*
 &nbsp;|**Default value:**
 &nbsp;|```{ ".html" : "text/html", ".js": "application/javascript", ".json": "application/json", ".css": "text/css", ".txt": "text/plain", ".jpg": "image/jpeg", ".gif": "image/gif", ".png": "image/png", ".ico": "image/ico" }```
 `ALLOW_UNKNOWN_FILETYPES`|*A value of 0 tells CustomServer to reject attempts to access files with unrecognized extensions, even if they are present on the server. (Default)*
 &nbsp;|*A value of 1 tells CustomServer to allow access to files with unrecognized extensions. CustomServer will attempt to recognize the file's mimetype automatically.*
 &nbsp;|**NOTE:** Mimetype detection is only supported on Linux at this time.
-`ALLOW_DIR_LISTING|*A value of 0 tells CustomServer to reject attempts to view directories. (Default)*
+`ALLOW_DIR_LISTING`|*A value of 0 tells CustomServer to reject attempts to view directories. (Default)*
 &nbsp;|*A value of 1 tells CustomServer to allow directory listing.*
 `ENABLE_API`|*This is the heart of CustomServer. All other options are for displaying static content. But most web apps need to be able to respond to things like POST requests and attempts to retrieve data in ways that involve instructing the server to perform certain tasks, rather than just displaying a file.*
 &nbsp;|*If ENABLE_API is set to 1 (not default), CustomServer will pass all POSTs, and any GETs that request something other than a file or directory that is present on the server, to a function called `processAPI()`. It is this function's job to determine what needs to be done with the POST or GET it receives.*
