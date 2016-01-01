@@ -110,13 +110,13 @@ var ALLOW_UNKNOWN_FILETYPES = 0;
 var ALLOW_DIR_LISTING = 0;
 
 /* API CALLS
- * To enable interactive features, set ENABLE_API to 1, and add your
+ * To add interactive features, set ENABLE_API to 1, and add your
  * program's interactive components to the function processAPI().
  */
 var ENABLE_API = 0;
 
 function processAPI(req, res) {
-	console.log(utilities.timeStamp() + ": PLACEHOLDER: Please customize processAPI()." + 
+	utilities.log("PLACEHOLDER: Please customize processAPI()." + 
 		"Requested URL was " + req.url + " and requested method was " + req.method);
 	res.end("PLACEHOLDER: Please customize processAPI()." + 
 		"Requested URL was " + req.url + " and requested method was " + req.method);
@@ -184,13 +184,14 @@ var utilities = {
 		}
 
 		// Return the formatted string
-		return date.join("/") + " " + time.join(":") + " " + suffix;
+		return date.join("/") + " " + time.join(":") + " " + suffix + ": ";
+	},
+	log : function(message) {
+		console.log(utilities.timeStamp() + message)
 	}
 }
 
-// Build server
-var customServer = {
-
+var fileSystem = {
 	getFile : function(filename, res, mimetype) {
 		fs.readFile(filename, function(err, contents) {
 			if(err) {
@@ -211,16 +212,16 @@ var customServer = {
 		if(OS === "linux") {
 			exec('file -b --mime-type ' + filename, function(error, stdout, stderr) {
 				if(error === null) {
-					console.log(utilities.timeStamp() + ": Mimetype identified as: " + stdout);
+					utilities.log("Mimetype identified as: " + stdout);
 					mimetype = stdout;
-					customServer.getFile(filename, res, mimetype);
+					fileSystem.getFile(filename, res, mimetype);
 				} else {
-					console.log(utilities.timeStamp() + ": Unable to execute mimetype detection! Threw error: " + error);
+					utilities.log("Unable to execute mimetype detection! Threw error: " + error);
 					customServer.error("500", res);
 				}
 			});
 		} else {
-			console.log(utilities.timeStamp() + ": Operating system type '" + OS + "' is UNSUPPORTED! Returning error 500.");
+			utilities.log("Operating system type '" + OS + "' is UNSUPPORTED! Returning error 500.");
 			customServer.error("500", res);
 		}
 	},
@@ -284,7 +285,11 @@ var customServer = {
 			);
 			res.end();
 		}
-	},
+	}
+}
+
+// Build server
+var customServer = {
 
 	error : function(type, res) {
 
@@ -302,7 +307,7 @@ var customServer = {
 			}
 			fs.readFile(errorFile, function(err, contents) {
 				if(err) {
-					console.log(utilities.timeStamp() + ": Internal error! Unable to parse error message for display! Switching to failsafe error.");
+					utilities.log("Internal error! Unable to parse error message for display! Switching to failsafe error.");
 					res.writeHead(500);
 					res.end('The server has experienced a critical internal error.');
 				} else {
@@ -349,14 +354,14 @@ var customServer = {
 	},
 
 	process : function(req, res) {
-		if(req.method === 'POST') {
+		if(req.method !== 'GET') {
 			if(ENABLE_API === 1) {
-				// Bypass everything else and go straight to processAPI, since something has been posted.
-				console.log(utilities.timeStamp() + ": Client made POST request. Passing to processAPI().");
+				// Bypass everything else and go straight to processAPI, since a method other than GET was used.
+				utilities.log("Client used " + req.method + " method. Passing to processAPI().");
 				processAPI(req, res);
 			} else {
 				// Posting is not allowed to this server. Return 500 error.
-				console.log(utilities.timeStamp() + ": Client made unsupported POST request. Returning error 500.");
+				utilities.log("Client used unsupported " + req.method + " method. Returning error 500.");
 				customServer.error("500", res);
 			}
 		}
@@ -370,14 +375,14 @@ var customServer = {
 			// Requested a specific file, location, or API.
 			url = APP_DIR + req.url;
 		}
-		console.log(utilities.timeStamp() + ": Client requested: " + url);
+		utilities.log("Client requested: " + url);
 		fs.stat(url, function(err, stats){
 			if(err === null) {
 				// Client requested a file or directory
-				console.log(utilities.timeStamp() + ": Client requested a URL that EXISTS.");
+				utilities.log("Client requested a URL that EXISTS.");
 				if(stats.isFile()) {
 					// Client requested a file
-					console.log(utilities.timeStamp() + ": Requested URL is a file. Testing extension validity...");
+					utilities.log("Requested URL is a file. Testing extension validity...");
 					var filename = url;
 
 					if(path.extname(filename)) {
@@ -386,52 +391,52 @@ var customServer = {
 						var isValidExt = EXTENSIONS[ext];
 						if (isValidExt) {
 							// Extension is on the list. Serve it to the client
-							console.log(utilities.timeStamp() + ": File extension " + ext + " is KNOWN. Providing to client.");
-							customServer.getFile(filename, res, EXTENSIONS[ext]);
+							utilities.log("File extension " + ext + " is KNOWN. Providing to client.");
+							fileSystem.getFile(filename, res, EXTENSIONS[ext]);
 						} else {
 							// Extension is not on the list. Check if unknown extensions are allowed.
 							if(ALLOW_UNKNOWN_FILETYPES === 1) {
-								console.log(utilities.timeStamp() + ": File extension '" + ext + "' is UNKNOWN. Detecting mimetype...");
-								customServer.getUnknownFile(filename, res)
+								utilities.log("File extension '" + ext + "' is UNKNOWN. Detecting mimetype...");
+								fileSystem.getUnknownFile(filename, res)
 							} else {
-								console.log(utilities.timeStamp() + ": File extension '" + ext + "' is UNKNOWN. Returning error 500.");
+								utilities.log("File extension '" + ext + "' is UNKNOWN. Returning error 500.");
 								customServer.error("500", res);
 							}
 						}
 					} else {
 						// File does NOT have an extension and is NOT a directory. Unless unknown file types are allowed, throw an error.
 						if(ALLOW_UNKNOWN_FILETYPES === 1) {
-							console.log(utilities.timeStamp() + ": File has no extension. Detecting mimetype...");
-							customServer.getUnknownFile(filename, res)
+							utilities.log("File has no extension. Detecting mimetype...");
+							fileSystem.getUnknownFile(filename, res)
 						} else {
-							console.log(utilities.timeStamp() + ": File has no extension. Returning error 500.");
+							utilities.log("File has no extension. Returning error 500.");
 							customServer.error("500", res);
 						}
 					}
 				} else if(stats.isDirectory()) {
 					// Client requested a directory
 					if(ALLOW_DIR_LISTING === 1) {
-						console.log(utilities.timeStamp() + ": Requested URL is a directory. Returning directory listing...");
+						utilities.log("Requested URL is a directory. Returning directory listing...");
 						var directory = url;
-						customServer.getDir(directory, req, res);
+						fileSystem.getDir(directory, req, res);
 					} else {
-						console.log(utilities.timeStamp() + ": Requested URL is a directory. Directory listing denied.");
+						utilities.log("Requested URL is a directory. Directory listing denied.");
 						customServer.error("403", res);
 					}
 
 				} else {
 					// URL is a file without an extension.
-					console.log(utilities.timeStamp() + ": Requested URL is not an intelligible resource. Returning error 500.");
+					utilities.log("Requested URL is not an intelligible resource. Returning error 500.");
 					customServer.error("500", res);
 				}
 			} else {
 				// Client requested a non-existent URL. Either use processAPI() or reject outright.
 				if(ENABLE_API === 1) {
 					// API processing is enabled. Pass control to processAPI() to decide what to do.
-					console.log(utilities.timeStamp() + ": Requested URL does not exist. Passing to processAPI() for further processing.");
+					utilities.log("Requested URL does not exist. Passing to processAPI() for further processing.");
 					processAPI(req, res);
 				} else {
-					console.log(utilities.timeStamp() + ": Requested URL does not exist. Returning error 404.");
+					utilities.log("Requested URL does not exist. Returning error 404.");
 					customServer.error("404", res);
 				}
 			}
@@ -441,7 +446,7 @@ var customServer = {
 	init : function(req, res) {
 		if(USE_SSL === 1) {
 			// Starting a secure server.
-			console.log(utilities.timeStamp() + ": CustomServer starting in SSL mode on these addresses/ports:");
+			utilities.log("CustomServer starting in SSL mode on these addresses/ports:");
 			SERVER_ADDRESSES.forEach(function(address) {
 				SSL_PORTS.forEach(function(port) {
 					console.log("                       " + address + "/" + port);
@@ -451,7 +456,7 @@ var customServer = {
 				});
 			});
 		} else {
-			console.log(utilities.timeStamp() + ": CustomServer starting on these addresses/ports:");
+			utilities.log("CustomServer starting on these addresses/ports:");
 			SERVER_ADDRESSES.forEach(function(address) {
 				SERVER_PORTS.forEach(function(port) {
 					console.log("                       " + address + "/" + port);
